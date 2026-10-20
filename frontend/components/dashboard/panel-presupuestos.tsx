@@ -10,6 +10,7 @@ import { TablaPresupuestos } from "@/components/dashboard/tabla-presupuestos"
 import { TarjetaTarifas } from "@/components/dashboard/tarjeta-tarifas"
 import { TarjetasKpi } from "@/components/dashboard/tarjetas-kpi"
 import { TickerTarifas } from "@/components/dashboard/ticker-tarifas"
+import { UltimoPresupuesto } from "@/components/dashboard/ultimo-presupuesto"
 import { Button } from "@/components/ui/button"
 import { useApi } from "@/hooks/use-api"
 import { ErrorApi, obtenerTarifas, pedirPresupuesto } from "@/lib/api"
@@ -35,6 +36,8 @@ export function PanelPresupuestos() {
   const [borrador, setBorrador] = useState<Borrador>(BORRADOR_INICIAL)
   const [editandoId, setEditandoId] = useState<number | null>(null)
   const [respuesta, setRespuesta] = useState<RespuestaApi | null>(null)
+  // Último presupuesto creado o editado (se muestra en "Último presupuesto")
+  const [ultimo, setUltimo] = useState<{ id: number; accion: string } | null>(null)
   const [enviando, setEnviando] = useState(false)
 
   const siguienteId = useRef(1)
@@ -52,7 +55,9 @@ export function PanelPresupuestos() {
     )
       .then((resultados) => {
         if (!activo) return
-        setRegistros(resultados.map((resultado) => ({ id: siguienteId.current++, ...resultado })))
+        const iniciales = resultados.map((resultado) => ({ id: siguienteId.current++, ...resultado }))
+        setRegistros(iniciales)
+        setUltimo({ id: iniciales[iniciales.length - 1].id, accion: "calculado al abrir el panel" })
         setCargando(false)
       })
       .catch((error: unknown) => {
@@ -113,10 +118,12 @@ export function PanelPresupuestos() {
         )
         setEditandoId(null)
         etiqueta = `${codigo(idEditado)} actualizado`
+        setUltimo({ id: idEditado, accion: "actualizado" })
       } else {
         const id = siguienteId.current++
         setRegistros((actuales) => [...actuales, { id, solicitud, presupuesto }])
         etiqueta = `${codigo(id)} creado`
+        setUltimo({ id, accion: "creado" })
       }
 
       setRespuesta({ estado: 200, cuerpo: presupuesto, etiqueta, milisegundos: transcurrido(inicio) })
@@ -135,6 +142,10 @@ export function PanelPresupuestos() {
       setEnviando(false)
     }
   }
+
+  // Si el último se ha eliminado, se muestra el más reciente que quede en la lista
+  const registroUltimo =
+    registros.find((registro) => registro.id === ultimo?.id) ?? registros.at(-1) ?? null
 
   return (
     <>
@@ -179,6 +190,14 @@ export function PanelPresupuestos() {
           />
           <PanelJson solicitud={aSolicitud(borrador)} respuesta={respuesta} />
         </div>
+
+        <UltimoPresupuesto
+          registro={registroUltimo}
+          accion={registroUltimo?.id === ultimo?.id ? (ultimo?.accion ?? "") : "último de la lista"}
+          cargando={cargando}
+          editando={registroUltimo !== null && editandoId === registroUltimo.id}
+          onEditar={editar}
+        />
 
         <TablaPresupuestos
           registros={registros}

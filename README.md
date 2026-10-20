@@ -1,73 +1,115 @@
-# Presupuesta mi web · API
+# Presupuesta mi web
 
 API REST que calcula presupuestos desglosados para proyectos web a partir de sus características. El servidor valida los datos recibidos y calcula el precio **con sus propias tarifas**: nunca acepta precios ni totales enviados por el cliente.
 
-> Actividad **0613 · Desarrollo web en entorno servidor** · RA7 · CE 7.4 y 7.6
+Incluye además un **dashboard web** (ampliación opcional) que consume la API: crea y edita presupuestos, los muestra en un gráfico y enseña la respuesta JSON del servidor.
 
-**Tecnologías:** Node.js · Express 5 · JavaScript (módulos ES)
+> Actividad **0613 · Desarrollo web en entorno servidor** · RA7 · CE 7.4, 7.6 y 7.7
+
+| Parte | Carpeta | Tecnologías |
+|---|---|---|
+| **API** (obligatoria) | `backend_API/` | Node.js · Express 5 · JavaScript (módulos ES) |
+| **Dashboard** (ampliación) | `frontend/` | Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · shadcn/ui · Recharts · React Bits |
 
 ---
 
-## Requisitos
+## Puesta en marcha rápida
 
-- [Node.js](https://nodejs.org/) **18 o superior** (probado con Node.js v25.9.0)
-- npm (incluido con Node.js)
+### Requisitos
 
-Para comprobar la versión instalada:
+- [Node.js](https://nodejs.org/) **20.9 o superior** (probado con Node.js v25.9.0). La API funciona desde Node 18, pero el dashboard (Next.js 16) necesita 20.9 o superior.
+- npm (incluido con Node.js) y Git.
+- Conexión a internet la primera vez (para `npm install` y para descargar las fuentes del dashboard).
 
 ```bash
 node -v
 ```
 
----
-
-## Instalación
+### 1. Clonar el repositorio
 
 ```bash
 git clone https://github.com/ecalderoncuevas/presupuesta_mi_web_api.git
-cd presupuesta_mi_web_api/backend_API
-npm install
+cd presupuesta_mi_web_api
 ```
 
-`npm install` instala las dependencias declaradas en `backend_API/package.json` (`express` y `cors`).
-
-## Ejecución
-
-Desde la carpeta `backend_API/`:
+### 2. Arrancar la API (terminal 1)
 
 ```bash
+cd backend_API
+npm install
 npm start
 ```
 
-Modo desarrollo (se reinicia automáticamente al guardar cambios):
-
-```bash
-npm run dev
-```
-
-Al arrancar se muestra:
+Debe aparecer:
 
 ```
 API escuchando en http://localhost:3001
 ```
 
-## Puerto
+Comprobación: abrir **http://localhost:3001/api/estado** en el navegador → `{"status":"ok"}`.
 
-La API escucha por defecto en el puerto **3001**: **http://localhost:3001**
+### 3. Arrancar el dashboard (terminal 2, ampliación)
 
-Se puede cambiar con la variable de entorno `PORT`:
+Con la API en marcha, en **otra** terminal desde la raíz del repositorio:
 
 ```bash
-# PowerShell
+cd frontend
+npm install
+npm run dev
+```
+
+Abrir **http://localhost:3000**. El indicador de la barra superior debe decir **«API operativa»** y el panel carga automáticamente los casos 1 a 4 del enunciado calculados por la API.
+
+> Las dos terminales deben quedar abiertas. Si se abre el dashboard antes de arrancar la API, basta con arrancarla y recargar la página.
+
+### Resumen
+
+| Parte | Carpeta | Instalar | Arrancar | URL |
+|---|---|---|---|---|
+| API | `backend_API/` | `npm install` | `npm start` | http://localhost:3001 |
+| Dashboard | `frontend/` | `npm install` | `npm run dev` | http://localhost:3000 |
+
+### Problemas frecuentes
+
+| Síntoma | Causa y solución |
+|---|---|
+| El dashboard no arranca y pide una versión de Node mayor | Next.js 16 requiere Node **20.9+**. Instalar la versión LTS de Node.js. |
+| `Error: listen EADDRINUSE :::3001` | El puerto 3001 está ocupado por otro programa. Cerrarlo o usar otro puerto (ver [Cambiar los puertos](#cambiar-los-puertos)). |
+| El dashboard muestra **«API no disponible»** | La API no está arrancada (terminal 1). Arrancarla con `npm start` y recargar la página. |
+| PowerShell: *«npm.ps1 no se puede cargar porque la ejecución de scripts está deshabilitada»* | Ejecutar `Set-ExecutionPolicy -Scope Process Bypass` en esa ventana (solo afecta a esa terminal) o usar CMD / Git Bash. |
+| El puerto 3000 está ocupado | Next.js usa automáticamente el siguiente libre: abrir la URL que muestra la terminal. |
+| `npm install` en `frontend/` avisa de vulnerabilidades | Proceden de dependencias del CLI de shadcn (herramienta de desarrollo para añadir componentes). No afectan a la API ni al dashboard. **No** ejecutar `npm audit fix --force`, que cambia versiones y puede romper el proyecto. |
+
+### Cambiar los puertos
+
+La API usa la variable de entorno `PORT` (por defecto `3001`). Si se cambia, hay que indicar al dashboard la nueva URL con `NEXT_PUBLIC_API_URL` (por defecto `http://localhost:3001`):
+
+```powershell
+# PowerShell · terminal 1
+cd backend_API
 $env:PORT=4000; npm start
 
-# Bash
-PORT=4000 npm start
+# PowerShell · terminal 2
+cd frontend
+$env:NEXT_PUBLIC_API_URL="http://localhost:4000"; npm run dev
 ```
+
+```bash
+# Bash
+cd backend_API && PORT=4000 npm start
+cd frontend && NEXT_PUBLIC_API_URL=http://localhost:4000 npm run dev
+```
+
+### Otros comandos
+
+| Carpeta | Comando | Qué hace |
+|---|---|---|
+| `backend_API/` | `npm run dev` | API en modo desarrollo: se reinicia al guardar cambios |
+| `frontend/` | `npm run build` y después `npm start` | Dashboard compilado en modo producción (puerto 3000) |
 
 ---
 
-## Rutas
+## Rutas de la API
 
 | Método | Ruta | Descripción |
 |---|---|---|
@@ -185,9 +227,9 @@ Todos los errores se devuelven en JSON con el formato `{ "errores": [ ... ] }`.
 
 ---
 
-## Funcionamiento
+## Funcionamiento de la API
 
-### Validación (`src/validacion.js`)
+### Validación (`backend_API/src/validacion.js`)
 
 `validarSolicitud(body)` devuelve un array con todos los errores encontrados (vacío si la solicitud es válida):
 
@@ -197,7 +239,7 @@ Todos los errores se devuelven en JSON con el formato `{ "errores": [ ... ] }`.
 4. `paginas` debe cumplir `Number.isInteger(paginas)` y estar entre 1 y 20 (rechaza `"4"`, `2.5`, `0` y `21`).
 5. `formulario` y `segundoIdioma` deben ser de tipo `boolean` (rechaza `"false"`).
 
-### Cálculo (`src/calculo.js`)
+### Cálculo (`backend_API/src/calculo.js`)
 
 `calcularPresupuesto({ tipo, paginas, formulario, segundoIdioma })` es una función independiente del manejador de la ruta. Recibe los datos ya validados y aplica:
 
@@ -214,10 +256,31 @@ Total = precio base + páginas adicionales + extras seleccionados
 
 ### Control de las tarifas
 
-- Las tarifas están definidas en `src/tarifas.js` y congeladas con `Object.freeze`.
+- Las tarifas están definidas en `backend_API/src/tarifas.js` y congeladas con `Object.freeze`.
 - El cálculo solo lee precios de ese módulo.
 - La ruta pasa a la función de cálculo **únicamente** los cuatro campos validados, por lo que cualquier propiedad extra enviada por el cliente (`total`, `base`, precios…) no tiene efecto.
 - Los presupuestos no se guardan en ninguna base de datos.
+
+---
+
+## Dashboard (ampliación)
+
+Interfaz React que consume la API. Todo lo que muestra procede del servidor:
+
+- **Indicador de estado** de la API (`GET /api/estado`) y **cinta de tarifas** (`GET /api/tarifas`).
+- **Indicadores**: número de presupuestos, importe acumulado, presupuesto medio y mayor presupuesto.
+- **Gráfico de columnas apiladas** con el desglose de cada presupuesto (base, páginas adicionales y extras). Al pulsar una columna se edita ese presupuesto.
+- **Editor** para crear un presupuesto nuevo o editar uno existente, con la **respuesta JSON** al lado: el cuerpo que se envía y lo que devuelve el servidor, con su código HTTP (200 o 400).
+- **Último presupuesto calculado**: tipo de web, páginas, extras y su respuesta JSON.
+- **Tabla de presupuestos** con el desglose completo y botones para editar y eliminar.
+- Botón para cambiar entre **modo claro y oscuro** (también con la tecla `D`).
+
+Cómo consume el servicio:
+
+- Todas las llamadas están en `frontend/lib/api.ts`.
+- El formulario envía **solo** `tipo`, `paginas`, `formulario` y `segundoIdioma`; nunca precios ni totales.
+- No valida en el cliente: los errores que se muestran son los que devuelve la API (por ejemplo, al escribir 21 o 2,5 páginas aparece el `400` del servidor).
+- Los presupuestos solo viven en memoria durante la sesión: al recargar la página se pierden (no hay base de datos).
 
 ---
 
@@ -226,24 +289,35 @@ Total = precio base + páginas adicionales + extras seleccionados
 ```
 presupuesta_mi_web_api/
 ├── README.md
-├── backend_API/              ← API (Express)
+├── backend_API/                  ← API (Express)
 │   ├── package.json
 │   ├── package-lock.json
-│   ├── pruebas.http          ← peticiones de prueba (REST Client)
+│   ├── pruebas.http              ← peticiones de prueba (REST Client)
 │   └── src/
-│       ├── server.js         ← arranca el servidor en el puerto
-│       ├── app.js            ← configuración de Express y rutas
-│       ├── tarifas.js        ← tarifas del servidor
-│       ├── validacion.js     ← validación de solicitudes
-│       └── calculo.js        ← función de cálculo del presupuesto
-└── frontend/                 ← interfaz web (Next.js, ampliación en desarrollo)
+│       ├── server.js             ← arranca el servidor en el puerto
+│       ├── app.js                ← configuración de Express y rutas
+│       ├── tarifas.js            ← tarifas del servidor
+│       ├── validacion.js         ← validación de solicitudes
+│       └── calculo.js            ← función de cálculo del presupuesto
+└── frontend/                     ← dashboard (Next.js)
+    ├── package.json
+    ├── package-lock.json
+    ├── app/                      ← página, layout y estilos globales
+    ├── components/
+    │   ├── dashboard/            ← secciones del dashboard
+    │   └── ui/                   ← componentes de shadcn/ui
+    ├── hooks/use-api.ts          ← peticiones a la API desde los componentes
+    └── lib/
+        ├── api.ts                ← cliente de la API (todas las llamadas)
+        ├── formato.ts            ← formato de euros y textos de las tarifas
+        └── presupuestos.ts       ← tipos y utilidades del dashboard
 ```
 
 ---
 
 ## Pruebas
 
-Las peticiones están en [`backend_API/pruebas.http`](backend_API/pruebas.http) y se pueden ejecutar con la extensión **REST Client** de VS Code (botón *Send Request* sobre cada `###`), con el servidor arrancado.
+Las peticiones están en [`backend_API/pruebas.http`](backend_API/pruebas.http) y se pueden ejecutar con la extensión **REST Client** de VS Code (botón *Send Request* sobre cada `###`), con la API arrancada.
 
 ### Rutas GET
 
@@ -275,3 +349,14 @@ Las peticiones están en [`backend_API/pruebas.http`](backend_API/pruebas.http) 
 | C | Caso 2 + `"total": 1, "base": 0` | 200 · Total: 830 € (se ignoran) | 200 · **830 €**, los campos extra no afectan ✅ |
 | D | `{ "tipo": "landing",` (JSON mal formado) | 400 | 400 · `El cuerpo de la petición no es un JSON válido` ✅ |
 | E | Body válido sin `Content-Type: application/json` | 400 | 400 · `El cuerpo de la petición debe ser un objeto JSON` ✅ |
+| F | `GET /api/loquesea` (ruta inexistente) | 404 | 404 · `Ruta no encontrada` ✅ |
+
+### Dashboard
+
+| Prueba | Resultado esperado | Resultado obtenido |
+|---|---|---|
+| Abrir el dashboard con la API arrancada | «API operativa», tarifas y casos 1–4 cargados | P-001 300 €, P-002 830 €, P-003 580 €, P-004 1.250 € ✅ |
+| Crear un presupuesto (corporativa, 4 páginas, formulario) | 200 y nuevo presupuesto en tabla, gráfico y JSON | `200 OK` · P-005 · 830 € ✅ |
+| Editar P-002 (8 páginas + segundo idioma) | El servidor lo recalcula | 600 + 350 + 80 + 150 = **1.180 €** ✅ |
+| Enviar 21 páginas desde el editor | 400 con el mensaje del servidor, sin crear nada | `400 Bad Request` · `paginas debe ser un número entero entre 1 y 20` ✅ |
+| Abrir el dashboard con la API apagada | Aviso claro, sin errores | «API no disponible» y mensajes en la cinta, las tarifas y la tabla ✅ |

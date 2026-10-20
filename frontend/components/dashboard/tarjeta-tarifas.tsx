@@ -24,7 +24,7 @@ export function TarjetaTarifas({ tarifas, error, className }: TarjetaTarifasProp
         {error && (
           <p role="alert" className="text-sm text-destructive">
             No se pudo conectar con la API. Arranque el backend con{" "}
-            <code className="font-mono">npm run dev</code> en{" "}
+            <code className="font-mono">npm start</code> en{" "}
             <code className="font-mono">backend_API</code>.
           </p>
         )}
