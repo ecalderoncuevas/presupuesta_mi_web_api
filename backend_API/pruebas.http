@@ -1,0 +1,90 @@
+@baseUrl = http://localhost:3001
+
+### Estado del servicio → 200 { "status": "ok" }
+GET {{baseUrl}}/api/estado
+
+### Tarifas → 200
+GET {{baseUrl}}/api/tarifas
+
+### Caso 1 · Landing, 1 página, sin extras → 200 · Total 300
+POST {{baseUrl}}/api/presupuesto
+Content-Type: application/json
+
+{ "tipo": "landing", "paginas": 1, "formulario": false, "segundoIdioma": false }
+
+### Caso 2 · Corporativa, 4 páginas, formulario, sin idioma → 200 · Total 830
+POST {{baseUrl}}/api/presupuesto
+Content-Type: application/json
+
+{ "tipo": "corporativa", "paginas": 4, "formulario": true, "segundoIdioma": false }
+
+### Caso 3 · Landing, 2 páginas, ambos extras → 200 · Total 580
+POST {{baseUrl}}/api/presupuesto
+Content-Type: application/json
+
+{ "tipo": "landing", "paginas": 2, "formulario": true, "segundoIdioma": true }
+
+### Caso 4 · Landing, 20 páginas, sin extras → 200 · Total 1250
+POST {{baseUrl}}/api/presupuesto
+Content-Type: application/json
+
+{ "tipo": "landing", "paginas": 20, "formulario": false, "segundoIdioma": false }
+
+### Caso 5 · paginas: 0 → 400
+POST {{baseUrl}}/api/presupuesto
+Content-Type: application/json
+
+{ "tipo": "landing", "paginas": 0, "formulario": false, "segundoIdioma": false }
+
+### Caso 6 · paginas: 21 → 400
+POST {{baseUrl}}/api/presupuesto
+Content-Type: application/json
+
+{ "tipo": "landing", "paginas": 21, "formulario": false, "segundoIdioma": false }
+
+### Caso 7 · paginas: 2.5 → 400
+POST {{baseUrl}}/api/presupuesto
+Content-Type: application/json
+
+{ "tipo": "landing", "paginas": 2.5, "formulario": false, "segundoIdioma": false }
+
+### Caso 8 · tipo: "tienda" → 400
+POST {{baseUrl}}/api/presupuesto
+Content-Type: application/json
+
+{ "tipo": "tienda", "paginas": 1, "formulario": false, "segundoIdioma": false }
+
+### Caso 9 · formulario: "false" → 400
+POST {{baseUrl}}/api/presupuesto
+Content-Type: application/json
+
+{ "tipo": "landing", "paginas": 1, "formulario": "false", "segundoIdioma": false }
+
+### Extra A · paginas: "4" (cadena) → 400
+POST {{baseUrl}}/api/presupuesto
+Content-Type: application/json
+
+{ "tipo": "landing", "paginas": "4", "formulario": false, "segundoIdioma": false }
+
+### Extra B · Faltan campos → 400
+POST {{baseUrl}}/api/presupuesto
+Content-Type: application/json
+
+{}
+
+### Extra C · El cliente intenta imponer total y tarifas → 200 · Total 830 (se ignoran)
+POST {{baseUrl}}/api/presupuesto
+Content-Type: application/json
+
+{ "tipo": "corporativa", "paginas": 4, "formulario": true, "segundoIdioma": false, "total": 1, "base": 0 }
+
+### Extra D · JSON mal formado → 400
+POST {{baseUrl}}/api/presupuesto
+Content-Type: application/json
+
+{ "tipo": "landing",
+
+### Extra E · Sin Content-Type: application/json → 400
+POST {{baseUrl}}/api/presupuesto
+
+{ "tipo": "landing", "paginas": 1, "formulario": false, "segundoIdioma": false }

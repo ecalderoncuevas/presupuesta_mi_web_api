@@ -22,7 +22,6 @@ app.get("/api/tarifas", (req, res) => {
   res.json({ tarifas: TARIFAS, moneda: MONEDA })
 })
 
-// POST /api/presupuesto → valida la solicitud (el cálculo llega en la Fase 6)
 // POST /api/presupuesto → valida la solicitud y devuelve el presupuesto desglosado
 app.post("/api/presupuesto", (req, res) => {
   const errores = validarSolicitud(req.body)
