@@ -15,6 +15,8 @@ Incluye además un **dashboard web** (ampliación opcional) que consume la API: 
 
 ## Puesta en marcha rápida
 
+Solo hacen falta **dos comandos** en la raíz del repositorio: `npm install` instala todo (API y dashboard) y `npm start` arranca las dos partes a la vez.
+
 ### Requisitos
 
 - [Node.js](https://nodejs.org/) **20.9 o superior** (probado con Node.js v25.9.0). La API funciona desde Node 18, pero el dashboard (Next.js 16) necesita 20.9 o superior.
@@ -32,80 +34,88 @@ git clone https://github.com/ecalderoncuevas/presupuesta_mi_web_api.git
 cd presupuesta_mi_web_api
 ```
 
-### 2. Arrancar la API (terminal 1)
+### 2. Instalar (una sola vez)
 
 ```bash
-cd backend_API
 npm install
+```
+
+Desde la raíz instala las dependencias de la raíz y, automáticamente, las de `backend_API/` y `frontend/` (script `postinstall`). Tarda alrededor de un minuto.
+
+### 3. Arrancar la API y el dashboard
+
+```bash
 npm start
 ```
 
-Debe aparecer:
+Arranca las dos partes en la misma terminal. Cada línea lleva delante de qué parte es:
 
 ```
-API escuchando en http://localhost:3001
+[API] API escuchando en http://localhost:3001
+[WEB] ▲ Next.js 16.4.0 (Turbopack)
+[WEB] - Local:         http://localhost:3000
+[WEB] ✓ Ready in 350ms
 ```
 
-Comprobación: abrir **http://localhost:3001/api/estado** en el navegador → `{"status":"ok"}`.
+| Qué | URL |
+|---|---|
+| **Dashboard** | **http://localhost:3000** |
+| API | http://localhost:3001 (comprobación: http://localhost:3001/api/estado → `{"status":"ok"}`) |
 
-### 3. Arrancar el dashboard (terminal 2, ampliación)
+En el dashboard, el indicador de la barra superior debe decir **«API operativa»** y el panel carga automáticamente los casos 1 a 4 del enunciado calculados por la API.
 
-Con la API en marcha, en **otra** terminal desde la raíz del repositorio:
+Para detener las dos partes: **Ctrl + C** en la terminal. Si una de las dos se detiene (por ejemplo, porque su puerto está ocupado), la otra también se detiene y el motivo aparece en la terminal.
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+### Arrancar cada parte por separado
 
-Abrir **http://localhost:3000**. El indicador de la barra superior debe decir **«API operativa»** y el panel carga automáticamente los casos 1 a 4 del enunciado calculados por la API.
+Útil para probar solo la API (parte obligatoria) o para cambiar los puertos. Desde la raíz del repositorio:
 
-> Las dos terminales deben quedar abiertas. Si se abre el dashboard antes de arrancar la API, basta con arrancarla y recargar la página.
+| Comando | Qué arranca | URL |
+|---|---|---|
+| `npm run api` | Solo la API | http://localhost:3001 |
+| `npm run web` | Solo el dashboard (necesita la API arrancada en otra terminal) | http://localhost:3000 |
 
-### Resumen
-
-| Parte | Carpeta | Instalar | Arrancar | URL |
-|---|---|---|---|---|
-| API | `backend_API/` | `npm install` | `npm start` | http://localhost:3001 |
-| Dashboard | `frontend/` | `npm install` | `npm run dev` | http://localhost:3000 |
+También se puede arrancar desde cada carpeta: `npm start` en `backend_API/` y `npm run dev` en `frontend/`.
 
 ### Problemas frecuentes
 
 | Síntoma | Causa y solución |
 |---|---|
-| El dashboard no arranca y pide una versión de Node mayor | Next.js 16 requiere Node **20.9+**. Instalar la versión LTS de Node.js. |
-| `Error: listen EADDRINUSE :::3001` | El puerto 3001 está ocupado por otro programa. Cerrarlo o usar otro puerto (ver [Cambiar los puertos](#cambiar-los-puertos)). |
-| El dashboard muestra **«API no disponible»** | La API no está arrancada (terminal 1). Arrancarla con `npm start` y recargar la página. |
+| `npm install` avisa de que la versión de Node no es compatible, o el dashboard no arranca | Next.js 16 requiere Node **20.9+**. Instalar la versión LTS de Node.js. |
+| `[API] No se pudo arrancar la API en el puerto 3001: listen EADDRINUSE` | El puerto 3001 está ocupado por otro programa. Cerrarlo o usar otro puerto (ver [Cambiar los puertos](#cambiar-los-puertos)). |
+| El dashboard muestra **«API no disponible»** | La API no está arrancada (por ejemplo, se lanzó solo `npm run web`). Arrancarla y recargar la página. |
 | PowerShell: *«npm.ps1 no se puede cargar porque la ejecución de scripts está deshabilitada»* | Ejecutar `Set-ExecutionPolicy -Scope Process Bypass` en esa ventana (solo afecta a esa terminal) o usar CMD / Git Bash. |
-| El puerto 3000 está ocupado | Next.js usa automáticamente el siguiente libre: abrir la URL que muestra la terminal. |
-| `npm install` en `frontend/` avisa de vulnerabilidades | Proceden de dependencias del CLI de shadcn (herramienta de desarrollo para añadir componentes). No afectan a la API ni al dashboard. **No** ejecutar `npm audit fix --force`, que cambia versiones y puede romper el proyecto. |
+| El puerto 3000 está ocupado | Next.js usa automáticamente el siguiente puerto libre: abrir la URL que aparece en la línea `[WEB] - Local:`. |
+| `npm install` avisa de vulnerabilidades en `frontend/` | Proceden de dependencias del CLI de shadcn (herramienta de desarrollo para añadir componentes). No afectan a la API ni al dashboard. **No** ejecutar `npm audit fix --force`, que cambia versiones y puede romper el proyecto. |
 
 ### Cambiar los puertos
 
-La API usa la variable de entorno `PORT` (por defecto `3001`). Si se cambia, hay que indicar al dashboard la nueva URL con `NEXT_PUBLIC_API_URL` (por defecto `http://localhost:3001`):
+La API usa la variable de entorno `PORT` (por defecto `3001`) y el dashboard llama a la URL de `NEXT_PUBLIC_API_URL` (por defecto `http://localhost:3001`). Para cambiarlos, arrancar cada parte en su propia terminal desde la raíz:
 
 ```powershell
 # PowerShell · terminal 1
-cd backend_API
-$env:PORT=4000; npm start
+$env:PORT=4000; npm run api
 
 # PowerShell · terminal 2
-cd frontend
-$env:NEXT_PUBLIC_API_URL="http://localhost:4000"; npm run dev
+$env:NEXT_PUBLIC_API_URL="http://localhost:4000"; npm run web
 ```
 
 ```bash
-# Bash
-cd backend_API && PORT=4000 npm start
-cd frontend && NEXT_PUBLIC_API_URL=http://localhost:4000 npm run dev
+# Bash · terminal 1
+PORT=4000 npm run api
+
+# Bash · terminal 2
+NEXT_PUBLIC_API_URL=http://localhost:4000 npm run web
 ```
 
-### Otros comandos
+### Scripts de la raíz
 
-| Carpeta | Comando | Qué hace |
-|---|---|---|
-| `backend_API/` | `npm run dev` | API en modo desarrollo: se reinicia al guardar cambios |
-| `frontend/` | `npm run build` y después `npm start` | Dashboard compilado en modo producción (puerto 3000) |
+| Script | Qué hace |
+|---|---|
+| `npm install` | Instala la raíz y, con `postinstall`, `backend_API/` y `frontend/` |
+| `npm start` | Arranca la API y el dashboard a la vez con [concurrently](https://www.npmjs.com/package/concurrently) |
+| `npm run api` | Arranca solo la API (`npm start` en `backend_API/`) |
+| `npm run web` | Arranca solo el dashboard (`npm run dev` en `frontend/`) |
 
 ---
 
@@ -289,6 +299,8 @@ Cómo consume el servicio:
 ```
 presupuesta_mi_web_api/
 ├── README.md
+├── package.json                  ← scripts de la raíz: npm install instala todo, npm start arranca todo
+├── package-lock.json
 ├── backend_API/                  ← API (Express)
 │   ├── package.json
 │   ├── package-lock.json
@@ -355,6 +367,8 @@ Las peticiones están en [`backend_API/pruebas.http`](backend_API/pruebas.http) 
 
 | Prueba | Resultado esperado | Resultado obtenido |
 |---|---|---|
+| Copia limpia del repositorio: `npm install` y `npm start` en la raíz | Se instalan las tres partes y arrancan API y dashboard | `[API] API escuchando…` y `[WEB] ✓ Ready`, sin errores ✅ |
+| `npm start` con el puerto 3001 ocupado | Mensaje claro y se detienen las dos partes | `[API] No se pudo arrancar la API en el puerto 3001: listen EADDRINUSE…` ✅ |
 | Abrir el dashboard con la API arrancada | «API operativa», tarifas y casos 1–4 cargados | P-001 300 €, P-002 830 €, P-003 580 €, P-004 1.250 € ✅ |
 | Crear un presupuesto (corporativa, 4 páginas, formulario) | 200 y nuevo presupuesto en tabla, gráfico y JSON | `200 OK` · P-005 · 830 € ✅ |
 | Editar P-002 (8 páginas + segundo idioma) | El servidor lo recalcula | 600 + 350 + 80 + 150 = **1.180 €** ✅ |

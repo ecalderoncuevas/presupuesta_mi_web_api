@@ -1,0 +1,20 @@
+{
+  "name": "presupuesta-mi-web",
+  "version": "1.0.0",
+  "description": "API de presupuestos web (Express) y dashboard que la consume (Next.js). Instalar con npm install y arrancar con npm start.",
+  "private": true,
+  "scripts": {
+    "postinstall": "npm install --prefix backend_API && npm install --prefix frontend",
+    "start": "concurrently --names API,WEB --prefix-colors yellow,cyan --kill-others \"npm start --prefix backend_API\" \"npm run dev --prefix frontend\"",
+    "api": "npm start --prefix backend_API",
+    "web": "npm run dev --prefix frontend"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "author": "Eduardo",
+  "license": "ISC",
+  "dependencies": {
+    "concurrently": "9.2.5"
+  }
+}
