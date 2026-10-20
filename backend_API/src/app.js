@@ -2,6 +2,7 @@ import express from "express"
 import cors from "cors"
 import { TARIFAS, MONEDA } from "./tarifas.js"
 import { validarSolicitud } from "./validacion.js"
+import { calcularPresupuesto } from "./calculo.js"
 
 
 // Crea la aplicación Express
@@ -22,6 +23,7 @@ app.get("/api/tarifas", (req, res) => {
 })
 
 // POST /api/presupuesto → valida la solicitud (el cálculo llega en la Fase 6)
+// POST /api/presupuesto → valida la solicitud y devuelve el presupuesto desglosado
 app.post("/api/presupuesto", (req, res) => {
   const errores = validarSolicitud(req.body)
 
@@ -30,9 +32,13 @@ app.post("/api/presupuesto", (req, res) => {
     return res.status(400).json({ errores })
   }
 
-  // Provisional: se sustituirá por el cálculo del presupuesto
-  res.json({ mensaje: "Solicitud válida" })
+  // Solo se pasan los 4 campos: las propiedades extra (p. ej. "total") se ignoran
+  const { tipo, paginas, formulario, segundoIdioma } = req.body
+  const presupuesto = calcularPresupuesto({ tipo, paginas, formulario, segundoIdioma })
+
+  res.status(200).json(presupuesto)
 })
+
 
 // Ruta no encontrada → 404 en JSON
 app.use((req, res) => {
