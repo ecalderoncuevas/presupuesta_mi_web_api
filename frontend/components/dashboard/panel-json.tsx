@@ -74,7 +74,7 @@ export function PanelJson({ solicitud, respuesta }: PanelJsonProps) {
           {respuesta ? (
             respuesta.estado === null ? (
               <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-                No se pudo conectar con la API. ¿Está arrancada en el puerto 3001?
+                No se pudo conectar con la API. Compruebe que el servidor está arrancado.
               </p>
             ) : (
               <BloqueJson valor={respuesta.cuerpo} />

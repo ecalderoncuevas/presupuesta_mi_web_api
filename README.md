@@ -16,6 +16,8 @@ También incluye un **asistente con IA**: el cliente describe su proyecto con su
 | **Dashboard** (ampliación) | `frontend/` | Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · shadcn/ui · Recharts · React Bits |
 | **Asistente con IA** (ampliación) | `frontend/app/api/` y `frontend/app/asistente/` | Route Handlers de Next.js · API de OpenAI (Responses, salida estructurada) · @react-pdf/renderer · shadcn AI Elements (Subagent) |
 
+Para poder desplegar todo en **Vercel como un solo proyecto**, `frontend/` incluye también las rutas de la API (`/api/estado`, `/api/tarifas` y `/api/presupuesto`) como rutas del servidor de Next.js, con la misma lógica, las mismas tarifas y los mismos mensajes que la API de Express. El dashboard usa por defecto esas rutas. La API de Express de `backend_API/` sigue completa y funcionando por su cuenta (ver [Despliegue en Vercel](#despliegue-en-vercel)).
+
 ---
 
 ## Puesta en marcha rápida
@@ -110,7 +112,7 @@ Para detener las dos partes: **Ctrl + C** en la terminal. Si una de las dos se d
 | Comando | Qué arranca | URL |
 |---|---|---|
 | `npm run api` | Solo la API | http://localhost:3001 |
-| `npm run web` | Solo el dashboard (necesita la API arrancada en otra terminal) | http://localhost:3000 |
+| `npm run web` | Solo el dashboard y el asistente, con sus propias rutas `/api` (no necesita la API de Express) | http://localhost:3000 |
 
 También se puede arrancar desde cada carpeta: `npm start` en `backend_API/` y `npm run dev` en `frontend/`.
 
@@ -120,7 +122,7 @@ También se puede arrancar desde cada carpeta: `npm start` en `backend_API/` y `
 |---|---|
 | `npm install` avisa de que la versión de Node no es compatible, o el dashboard no arranca | Next.js 16 requiere Node **20.9+**. Instalar la versión LTS de Node.js. |
 | `[API] No se pudo arrancar la API en el puerto 3001: listen EADDRINUSE` | El puerto 3001 está ocupado por otro programa. Cerrarlo o usar otro puerto (ver [Cambiar los puertos](#cambiar-los-puertos)). |
-| El dashboard muestra **«API no disponible»** | La API no está arrancada (por ejemplo, se lanzó solo `npm run web`). Arrancarla y recargar la página. |
+| El dashboard muestra **«API no disponible»** | El servidor de Next.js no responde, o se ha definido `NEXT_PUBLIC_API_URL` apuntando a la API de Express y esta no está arrancada. Arrancarla (o quitar la variable) y recargar la página. |
 | PowerShell: *«npm.ps1 no se puede cargar porque la ejecución de scripts está deshabilitada»* | Ejecutar `Set-ExecutionPolicy -Scope Process Bypass` en esa ventana (solo afecta a esa terminal) o usar CMD / Git Bash. |
 | El puerto 3000 está ocupado | Next.js usa automáticamente el siguiente puerto libre: abrir la URL que aparece en la línea `[WEB] - Local:`. |
 | El asistente dice *«El servicio de IA no está configurado en el servidor»* | Falta `OPENAI_API_KEY`, o el `.env.local` no está en `frontend/` (por ejemplo, está en la raíz o se guardó como `.env.local.txt`). Moverlo a `frontend/` y reiniciar. |
@@ -129,7 +131,7 @@ También se puede arrancar desde cada carpeta: `npm start` en `backend_API/` y `
 
 ### Cambiar los puertos
 
-La API usa la variable de entorno `PORT` (por defecto `3001`) y el dashboard llama a la URL de `NEXT_PUBLIC_API_URL` (por defecto `http://localhost:3001`). Para cambiarlos, arrancar cada parte en su propia terminal desde la raíz:
+La API de Express usa la variable de entorno `PORT` (por defecto `3001`). El dashboard llama por defecto a las rutas `/api` de su propio servidor de Next.js; si se define `NEXT_PUBLIC_API_URL`, llama en su lugar a esa URL (por ejemplo, a la API de Express). Para cambiar el puerto de Express y que el dashboard la use, arrancar cada parte en su propia terminal desde la raíz:
 
 ```powershell
 # PowerShell · terminal 1
@@ -160,7 +162,7 @@ NEXT_PUBLIC_API_URL=http://localhost:4000 npm run web
 
 ## Rutas de la API
 
-Rutas de la API de Express (`backend_API/`, puerto 3001). Las rutas del asistente están en [Asistente con IA](#asistente-con-ia-ampliación-con-openai).
+Rutas de la API de Express (`backend_API/`, puerto 3001). Las mismas rutas existen en el servidor de Next.js (`frontend/app/api/`, puerto 3000) con idénticas respuestas. Las rutas del asistente están en [Asistente con IA](#asistente-con-ia-ampliación-con-openai).
 
 | Método | Ruta | Descripción |
 |---|---|---|
@@ -328,7 +330,7 @@ Interfaz React que consume la API. Todo lo que muestra procede del servidor:
 
 Cómo consume el servicio:
 
-- Todas las llamadas están en `frontend/lib/api.ts`.
+- Todas las llamadas están en `frontend/lib/api.ts`. Por defecto van a las rutas `/api` del propio servidor de Next.js (`frontend/app/api/estado`, `tarifas` y `presupuesto`), que reproducen la API de Express con la lógica de `frontend/lib/api-presupuestos.ts`. Con `NEXT_PUBLIC_API_URL=http://localhost:3001` van a la API de Express.
 - El formulario envía **solo** `tipo`, `paginas`, `formulario` y `segundoIdioma`; nunca precios ni totales.
 - No valida en el cliente: los errores que se muestran son los que devuelve la API (por ejemplo, al escribir 21 o 2,5 páginas aparece el `400` del servidor).
 - Los presupuestos solo viven en memoria durante la sesión: al recargar la página se pierden (no hay base de datos).
@@ -506,6 +508,39 @@ Los importes se copian tal cual de la respuesta de `POST /api/calcular`: el PDF 
 
 ---
 
+## Despliegue en Vercel
+
+Se despliega **solo la carpeta `frontend/`**: contiene el dashboard, el asistente y todas las rutas `/api` que necesitan, así que no hace falta desplegar la API de Express.
+
+1. En [vercel.com/new](https://vercel.com/new), importar el repositorio de GitHub.
+2. En la configuración del proyecto:
+
+   | Campo | Valor |
+   |---|---|
+   | **Root Directory** | **`frontend`** |
+   | Framework Preset | Next.js (se detecta solo) |
+   | Build, Install y Output | Por defecto |
+
+3. En **Environment Variables**:
+
+   | Variable | Valor | Obligatoria |
+   |---|---|---|
+   | `OPENAI_API_KEY` | La clave de OpenAI, sin comillas | **Sí** |
+   | `OPENAI_MODEL` | `gpt-4.1-mini` | No (es el valor por defecto) |
+
+   **No** definir `NEXT_PUBLIC_API_URL`: así el dashboard usa las rutas `/api` del propio despliegue.
+
+4. Pulsar **Deploy**. Si se añade o cambia una variable después, hay que volver a desplegar (*Deployments → ⋯ → Redeploy*), porque las variables solo se aplican a los despliegues nuevos.
+
+**Comprobación:** en la URL de producción, el dashboard debe mostrar «API operativa» y los casos 1 a 4, y `/asistente` debe devolver una propuesta. Si el asistente falla, el motivo aparece en *Logs* del proyecto de Vercel, en las líneas `[api/propuesta]`.
+
+| Enlace | URL |
+|---|---|
+| Repositorio (público) | https://github.com/ecalderoncuevas/presupuesta_mi_web_api |
+| Aplicación en Vercel (pública) | *pendiente de despliegue* |
+
+---
+
 ## Estructura del proyecto
 
 ```
@@ -532,6 +567,10 @@ presupuesta_mi_web_api/
     │   ├── page.tsx              ← dashboard
     │   ├── asistente/page.tsx    ← página del asistente con IA
     │   └── api/                  ← rutas del servidor de Next.js
+    │       ├── estado/route.ts     ← GET /api/estado (igual que Express)
+    │       ├── tarifas/route.ts    ← GET /api/tarifas (igual que Express)
+    │       ├── presupuesto/route.ts ← POST /api/presupuesto (igual que Express)
+    │       ├── [...ruta]/route.ts  ← 404 en JSON para cualquier otra ruta /api
     │       ├── propuesta/route.ts  ← POST /api/propuesta: llamada a OpenAI y validación
     │       └── calcular/route.ts   ← POST /api/calcular: cálculo con las tarifas
     ├── components/
@@ -540,7 +579,9 @@ presupuesta_mi_web_api/
     │   └── ui/                   ← componentes de shadcn/ui (incluido trace, base del Subagent)
     ├── hooks/use-api.ts          ← peticiones a la API desde los componentes
     └── lib/
-        ├── api.ts                ← cliente de la API de Express
+        ├── api.ts                ← cliente de la API (rutas /api de Next o, si se configura, Express)
+        ├── api-presupuestos.ts   ← tarifas, validación y cálculo de /api/presupuesto (como Express)
+        ├── respuesta-json.ts     ← respuestas JSON y lectura del cuerpo comunes a las rutas
         ├── asistente.ts          ← llamadas del navegador a /api/propuesta y /api/calcular
         ├── catalogo.ts           ← catálogo de servicios del asistente
         ├── calculo-servicios.ts  ← validación de la selección y cálculo de importes
@@ -598,6 +639,7 @@ Las peticiones están en [`backend_API/pruebas.http`](backend_API/pruebas.http) 
 | Editar P-002 (8 páginas + segundo idioma) | El servidor lo recalcula | 600 + 350 + 80 + 150 = **1.180 €** ✅ |
 | Enviar 21 páginas desde el editor | 400 con el mensaje del servidor, sin crear nada | `400 Bad Request` · `paginas debe ser un número entero entre 1 y 20` ✅ |
 | Abrir el dashboard con la API apagada | Aviso claro, sin errores | «API no disponible» y mensajes en la cinta, las tarifas y la tabla ✅ |
+| Rutas `/api` de Next.js frente a la API de Express: los 15 casos anteriores, `GET` de estado y tarifas, cuerpos `null`, `4`, `true` y `[1,2]`, y ruta inexistente | Mismo código y mismo cuerpo en las dos | 21 casos con respuestas **idénticas** (comparadas con `diff`), también con la compilación de producción (`next build` + `next start`) ✅ |
 
 ### Asistente con IA
 

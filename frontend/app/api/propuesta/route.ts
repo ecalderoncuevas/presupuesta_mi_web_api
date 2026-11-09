@@ -7,6 +7,7 @@
 // y los importes los calcula siempre el servidor con sus tarifas.
 
 import { CATALOGO, esIdDelCatalogo } from "@/lib/catalogo"
+import { respuestaError as error, respuestaJson } from "@/lib/respuesta-json"
 import {
   MAX_CLIENTE,
   MAX_DESCRIPCION,
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
     )
   }
 
-  return Response.json(propuesta, { headers: CABECERA_JSON })
+  return respuestaJson(propuesta)
 }
 
 // ---------------------------------------------------------------------------
@@ -321,18 +322,4 @@ function validarRespuestaIA(datos: unknown, cliente: string): Propuesta | null {
 
 function esListaDeTextos(valor: unknown): valor is string[] {
   return Array.isArray(valor) && valor.every((v) => typeof v === "string")
-}
-
-// charset explícito: sin él, algunos clientes (p. ej. Windows PowerShell 5.1) leen mal los acentos
-const CABECERA_JSON = { "Content-Type": "application/json; charset=utf-8" }
-
-function error(
-  estado: number,
-  errores: string[],
-  extra?: Record<string, unknown>
-) {
-  return Response.json(
-    { errores, ...extra },
-    { status: estado, headers: CABECERA_JSON }
-  )
 }

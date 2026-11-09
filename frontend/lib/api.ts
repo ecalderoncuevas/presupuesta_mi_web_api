@@ -1,7 +1,10 @@
-// Cliente de la API de presupuestos (backend_API).
+// Cliente de la API de presupuestos.
 // Todas las llamadas al servidor pasan por este archivo.
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"
+//
+// Por defecto llama a las rutas del propio servidor de Next.js (app/api/...): rutas
+// relativas, así funciona igual en local y en Vercel. Para usar la API de Express
+// (backend_API), definir NEXT_PUBLIC_API_URL=http://localhost:3001.
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ""
 
 export type ClaveTarifa =
   | "landing"

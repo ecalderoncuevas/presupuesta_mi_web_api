@@ -23,9 +23,8 @@ export function TarjetaTarifas({ tarifas, error, className }: TarjetaTarifasProp
       <CardContent>
         {error && (
           <p role="alert" className="text-sm text-destructive">
-            No se pudo conectar con la API. Arranque el backend con{" "}
-            <code className="font-mono">npm start</code> en{" "}
-            <code className="font-mono">backend_API</code>.
+            No se pudo conectar con la API. Compruebe que el servidor está arrancado y
+            recargue la página.
           </p>
         )}
         <ul className="divide-y">
