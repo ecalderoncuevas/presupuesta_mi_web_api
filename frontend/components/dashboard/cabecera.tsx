@@ -1,4 +1,5 @@
 import { EstadoServicio } from "@/components/dashboard/estado-servicio"
+import { Navegacion } from "@/components/dashboard/navegacion"
 import { SelectorTema } from "@/components/dashboard/selector-tema"
 
 export function Cabecera() {
@@ -9,7 +10,7 @@ export function Cabecera() {
           Waverly &amp; Hale
         </span>
         <span className="h-5 w-px bg-border" aria-hidden="true" />
-        <span className="text-sm text-muted-foreground">Panel de presupuestos</span>
+        <Navegacion />
         <div className="ml-auto flex items-center gap-3">
           <EstadoServicio />
           <SelectorTema />
